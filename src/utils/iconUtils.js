@@ -1,39 +1,46 @@
 import * as LucideIcons from 'lucide-react';
 
 /**
- * Returns an icon component from the Lucide icons library
- * @param {string} iconName - The name of the icon to retrieve
- * @returns {Function} - A React component that renders the icon
+ * Utility function to get icon components
+ * 
+ * We import this where needed and then use as:
+ * getIcon("Home")({ className: "w-6 h-6" })
  */
 export default function getIcon(iconName) {
   const icons = {
-    // Navigation and Actions
+    // navigation and actions
     home: LucideIcons.Home,
-    settings: LucideIcons.Settings,
-    logout: LucideIcons.LogOut,
+    list: LucideIcons.List,
     plus: LucideIcons.Plus,
-    edit: LucideIcons.Edit,
+    settings: LucideIcons.Settings,
+    // arrows and actions
+    chevronRight: LucideIcons.ChevronRight,
+    chevronDown: LucideIcons.ChevronDown,
+    check: LucideIcons.Check,
+    x: LucideIcons.X,
     trash: LucideIcons.Trash,
-    search: LucideIcons.Search,
-    
-    // Finance-specific
+    // finance and data
     barChart: LucideIcons.BarChart,
-    barChart2: LucideIcons.BarChart2,
     pieChart: LucideIcons.PieChart,
-    trendingUp: LucideIcons.TrendingUp,
-    trendingDown: LucideIcons.TrendingDown,
     dollarSign: LucideIcons.DollarSign,
     creditCard: LucideIcons.CreditCard,
-    
-    // Misc UI Icons
-    bell: LucideIcons.Bell,
-    alertCircle: LucideIcons.AlertCircle,
-    calendar: LucideIcons.Calendar,
-    chevronDown: LucideIcons.ChevronDown,
-    shoppingBag: LucideIcons.ShoppingBag,
-    coffee: LucideIcons.Coffee,
-    car: LucideIcons.Car,
-    heart: LucideIcons.Heart,
+    wallet: LucideIcons.Wallet,
+    // misc
+    smile: LucideIcons.Smile,
+    moon: LucideIcons.Moon,
+    sun: LucideIcons.Sun
+  };
+  
+  // Convert to lowercase for case-insensitive lookup
+  const normalizedName = iconName.toLowerCase();
+  
+  // Try to match icon with case-insensitive check
+  const icon = Object.entries(icons).find(
+    ([key]) => key.toLowerCase() === normalizedName
+  );
+  
+  return icon ? icon[1] : LucideIcons.Smile;
+}
     shoppingCart: LucideIcons.ShoppingCart,
     moon: LucideIcons.Moon,
     sun: LucideIcons.Sun,
