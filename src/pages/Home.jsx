@@ -38,38 +38,35 @@ function Home() {
   // Load financial data from transactions
   useEffect(() => {
     const calculateFinancialData = async () => {
+      // Define transaction types - fix for ReferenceError: TypeInfo is not defined
+      const TransactionType = {
+        CREDIT: 'Credit',
+        DEBIT: 'Debit'
+      };
+      
       try {
         setIsLoading(true);
         const transactions = await fetchTransactions();
         
         // Calculate summary data
         const income = transactions
-          .filter(t => t && typeof t === 'object' && t.type === 'Credit' && !isNaN(t.amount))
+          .filter(t => t && typeof t === 'object' && t.type === TransactionType.CREDIT && !isNaN(t.amount))
           .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         
         const expenses = transactions
-          .filter(t => t && typeof t === 'object' && t.type === 'Debit' && !isNaN(t.amount))
+          .filter(t => t && typeof t === 'object' && t.type === TransactionType.DEBIT && !isNaN(t.amount))
           .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         
         const savings = income - expenses;
         const balance = 10000 + savings; // Starting balance + savings
         
         setFinancialData({
-          balance: balance || 0,
-          income: income || 0,
-          expenses: expenses || 0,
-          savings: savings || 0
+          balance, income, expenses, savings
         });
       } catch (error) {
-        console.error("Error calculating financial data:", error.message || error);
-        
-        // Reset financial data to prevent display errors
-        setFinancialData({
-          balance: 0,
-          income: 0, 
-          expenses: 0,
-          savings: 0
-        });
+        console.error("Error calculating financial data:", error);
+        // Reset financial data to zeros to prevent display errors
+        setFinancialData({ balance: 0, income: 0, expenses: 0, savings: 0 });
         toast.error("Unable to load financial data. Please try again later.");
       } finally {
         setIsLoading(false);
