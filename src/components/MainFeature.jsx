@@ -96,14 +96,13 @@ function MainFeature() {
   // Toggle modal visibility
   const openModal = () => setShowModal(true);
   const closeModal = () => {
-  const toggleForm = () => {
     setShowModal(false);
     if (editingId) {
       setEditingId(null);
       setFormData(initialFormState);
     }
   };
-
+  
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -195,10 +194,10 @@ function MainFeature() {
         <h3 className="text-lg md:text-xl font-semibold">
           Recent Transactions
         </h3>
+        <motion.button
           onClick={openModal}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          onClick={toggleForm}
           className="btn-primary flex items-center gap-2"
         >
           <PlusIcon className="w-4 h-4" />
