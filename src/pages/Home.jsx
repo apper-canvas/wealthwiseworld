@@ -216,7 +216,6 @@ function Home() {
           </div>
             </motion.div>
           </>
-        </motion.div>
       </div>
 
       {/* Main feature content based on active tab */}
