@@ -3,7 +3,7 @@ import {
   Plus, Trash, Pencil, Search, Menu, X, ChevronLeft, 
   ChevronRight, ChevronDown, ChevronUp, Calendar, 
   DollarSign, CreditCard, Wallet, Clock, Filter, 
-  ExternalLink, Download, Upload, Moon, Sun, Smile, Target, TrendingUp, Bell, BarChart2
+  ExternalLink, Download, Upload, Moon, Sun, Smile, Target, TrendingUp, Bell, BarChart2, ShoppingBag, Heart, Car, ShoppingCart
 } from 'lucide-react';
 /**
  * Utility to get icon components from Lucide
@@ -13,6 +13,7 @@ export default function getIcon(iconName) {
     home: Home,
     user: User,
     settings: Settings,
+    shoppingbag: ShoppingBag,
     barchart: BarChart,
     barchart2: BarChart2,
     piechart: PieChart,
@@ -41,7 +42,10 @@ export default function getIcon(iconName) {
     smile: Smile, 
     target: Target,
     trendingup: TrendingUp,
-    bell: Bell
+    bell: Bell,
+    heart: Heart,
+    car: Car,
+    shoppingcart: ShoppingCart
   };
   
   // Case-insensitive lookup with fallback to Smile icon

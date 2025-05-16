@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { format } from "date-fns";
 import getIcon from "../utils/iconUtils";
 import MainFeature from "../components/MainFeature";
 
@@ -14,6 +15,7 @@ const BellIcon = getIcon("Bell");
 const PieChartIconForFeature = getIcon("PieChart");
 const TargetIcon = getIcon("Target");
 const CalendarIcon = getIcon("Calendar");
+const EditIcon = getIcon("Edit");
 
 function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -186,3 +188,5 @@ function Home() {
 }
 
 export default Home;
+                <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                  Category
