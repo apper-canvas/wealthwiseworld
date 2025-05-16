@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { toast } from "react-toastify";
+import { toast } from "react-toastify"; 
 import { format } from "date-fns";
 import getIcon from "../utils/iconUtils";
 import MainFeature from "../components/MainFeature";
@@ -17,6 +17,7 @@ const TargetIcon = getIcon("Target");
 const CalendarIcon = getIcon("Calendar");
 const EditIcon = getIcon("Edit");
 
+import { useNavigate } from "react-router-dom";
 function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
   
@@ -27,11 +28,18 @@ function Home() {
     expenses: 2243.50,
     savings: 1606.50,
   };
+  
+  const navigate = useNavigate();
 
   // Handle tab change
   const handleTabChange = (tab) => {
     setActiveTab(tab);
-    if (tab !== "dashboard" && tab !== "transactions") {
+    if (tab === "budgets") {
+      navigate("/budget");
+      return;
+    }
+    
+    if (tab !== "dashboard" && tab !== "transactions" && tab !== "budgets") {
       toast.info(`${tab.charAt(0).toUpperCase() + tab.slice(1)} feature coming soon!`);
     }
   };

@@ -7,6 +7,7 @@ import getIcon from "./utils/iconUtils";
 // Pages
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+import Budget from "./pages/Budget";
 
 // Icon components
 const MoonIcon = getIcon("Moon");
@@ -72,6 +73,7 @@ function App() {
       <main className="flex-grow container mx-auto px-4 py-6">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/budget" element={<Budget />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
