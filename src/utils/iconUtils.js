@@ -41,7 +41,7 @@ export default function getIcon(iconName) {
     target: Target
   };
   
-  // Case-insensitive lookup
-  const key = iconName?.toLowerCase();
+  // Case-insensitive lookup with fallback to Smile icon
+  const key = iconName?.toLowerCase() || '';
   return icons[key] || Smile;
 }
