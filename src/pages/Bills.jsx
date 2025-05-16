@@ -195,7 +195,7 @@ function Bills() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <button
-          onClick={() => navigate("/")}
+          onClick={() => navigate('/')}
           className="mr-2 p-2 rounded-full hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
           aria-label="Back to Dashboard"
         >
