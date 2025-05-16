@@ -38,6 +38,10 @@ function Home() {
       navigate("/budget");
       return;
     }
+    if (tab === "goals") {
+      navigate("/goals");
+      return;
+    }
     
     if (tab !== "dashboard" && tab !== "transactions" && tab !== "budgets") {
       toast.info(`${tab.charAt(0).toUpperCase() + tab.slice(1)} feature coming soon!`);
