@@ -44,24 +44,33 @@ function Home() {
         
         // Calculate summary data
         const income = transactions
-          .filter(t => t && typeof t === 'object' && t.type === 'Credit')
-          .reduce((sum, t) => sum + Number(t.amount), 0);
+          .filter(t => t && typeof t === 'object' && t.type === 'Credit' && !isNaN(t.amount))
+          .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         
         const expenses = transactions
-          .filter(t => t && typeof t === 'object' && t.type === 'Debit')
-          .reduce((sum, t) => sum + Number(t.amount), 0);
+          .filter(t => t && typeof t === 'object' && t.type === 'Debit' && !isNaN(t.amount))
+          .reduce((sum, t) => sum + Number(t.amount || 0), 0);
         
         const savings = income - expenses;
         const balance = 10000 + savings; // Starting balance + savings
         
         setFinancialData({
-          balance,
-          income,
-          expenses,
-          savings
+          balance: balance || 0,
+          income: income || 0,
+          expenses: expenses || 0,
+          savings: savings || 0
         });
       } catch (error) {
-        console.error("Error calculating financial data:", error);
+        console.error("Error calculating financial data:", error.message || error);
+        
+        // Reset financial data to prevent display errors
+        setFinancialData({
+          balance: 0,
+          income: 0, 
+          expenses: 0,
+          savings: 0
+        });
+        toast.error("Unable to load financial data. Please try again later.");
       } finally {
         setIsLoading(false);
       }
