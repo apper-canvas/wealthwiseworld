@@ -260,9 +260,9 @@ function Budget() {
           </h1>
         </div>
         <button 
-          onClick={openAddModal} 
+          onClick={openAddModal}
           className="btn btn-primary"
-        >
+        > 
           <PlusIcon className="w-5 h-5 mr-2" />
           Add Budget
         </button>
