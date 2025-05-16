@@ -44,11 +44,11 @@ function Home() {
         
         // Calculate summary data
         const income = transactions
-          .filter(t => t.type === 'Credit')
+          .filter(t => t && typeof t === 'object' && t.type === 'Credit')
           .reduce((sum, t) => sum + Number(t.amount), 0);
         
         const expenses = transactions
-          .filter(t => t.type === 'Debit')
+          .filter(t => t && typeof t === 'object' && t.type === 'Debit')
           .reduce((sum, t) => sum + Number(t.amount), 0);
         
         const savings = income - expenses;
