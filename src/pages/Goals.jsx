@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import getIcon from "../utils/iconUtils";
@@ -12,8 +13,10 @@ const CalendarIcon = getIcon("Calendar");
 const TrophyIcon = getIcon("Trophy");
 const TargetIcon = getIcon("Target");
 const DollarSignIcon = getIcon("DollarSign");
+const ArrowLeftIcon = getIcon("ArrowLeft");
 
 function Goals() {
+  const navigate = useNavigate();
   // State for goals
   const [goals, setGoals] = useState(() => {
     const savedGoals = localStorage.getItem("goals");
@@ -156,6 +159,14 @@ function Goals() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
+        <button
+          onClick={() => navigate("/")}
+          className="mr-2 p-2 rounded-full hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+          aria-label="Back to Dashboard"
+        >
+          <ArrowLeftIcon size={20} className="text-surface-600 dark:text-surface-300" />
+        </button>
+        
         <h1 className="text-2xl font-bold">Financial Goals</h1>
         <button
           onClick={handleAddGoal}

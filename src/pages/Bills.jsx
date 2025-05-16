@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import getIcon from "../utils/iconUtils";
@@ -14,8 +15,10 @@ const CalendarIcon = getIcon("Calendar");
 const FilterIcon = getIcon("Filter");
 const CreditCardIcon = getIcon("CreditCard");
 const XIcon = getIcon("X");
+const ArrowLeftIcon = getIcon("ArrowLeft");
 
 function Bills() {
+  const navigate = useNavigate();
   // State for bills list
   const [bills, setBills] = useState(() => {
     const savedBills = localStorage.getItem("bills");
@@ -191,6 +194,14 @@ function Bills() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
+        <button
+          onClick={() => navigate("/")}
+          className="mr-2 p-2 rounded-full hover:bg-surface-100 dark:hover:bg-surface-700 transition-colors"
+          aria-label="Back to Dashboard"
+        >
+          <ArrowLeftIcon size={20} className="text-surface-600 dark:text-surface-300" />
+        </button>
+        
         <h1 className="text-2xl font-bold flex items-center gap-2">
           <BellIcon className="text-accent" />
           Bills Management
