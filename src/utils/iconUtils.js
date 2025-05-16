@@ -41,5 +41,5 @@ export default function getIcon(iconName) {
     target: LucideIcons.Target
   };
   
-  return icons[iconName.toLowerCase()] || icons.smile;
+  return icons[iconName?.toLowerCase()] || icons.smile;
 }
