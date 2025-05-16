@@ -1,41 +1,48 @@
-import * as LucideIcons from 'lucide-react';
-
+import { 
+  Home, User, Settings, BarChart, PieChart, LineChart, 
+  Plus, Trash, Pencil, Search, Menu, X, ChevronLeft, 
+  ChevronRight, ChevronDown, ChevronUp, Calendar, 
+  DollarSign, CreditCard, Wallet, Clock, Filter, 
+  ExternalLink, Download, Upload, Moon, Sun, Smile, Target
+} from 'lucide-react';
+    x: LucideIcons.X,
 /**
-* Utility function to get icon components
-* 
-* We import this where needed and then use as:
-* getIcon("Home")({ className: "w-6 h-6" })
-*/
+ * Utility to get icon components from Lucide
+ */
 export default function getIcon(iconName) {
   const icons = {
-    // navigation and actions
-    home: LucideIcons.Home,
-    list: LucideIcons.List,
-    plus: LucideIcons.Plus,
-    settings: LucideIcons.Settings,
-    
-    // arrows and actions
-    chevronRight: LucideIcons.ChevronRight,
-    chevronDown: LucideIcons.ChevronDown,
-    check: LucideIcons.Check,
-    x: LucideIcons.X,
-    trash: LucideIcons.Trash,
-    
-    // finance and data
-    barChart: LucideIcons.BarChart,
-    pieChart: LucideIcons.PieChart,
-    dollarSign: LucideIcons.DollarSign,
-    creditCard: LucideIcons.CreditCard,
-    wallet: LucideIcons.Wallet,
-    shoppingCart: LucideIcons.ShoppingCart,
-    
-    // misc
-    smile: LucideIcons.Smile,
-    moon: LucideIcons.Moon,
-    sun: LucideIcons.Sun,
-    target: LucideIcons.Target
+    home: Home,
+    user: User,
+    settings: Settings,
+    barchart: BarChart,
+    piechart: PieChart,
+    linechart: LineChart,
+    plus: Plus,
+    trash: Trash,
+    edit: Pencil,
+    search: Search,
+    menu: Menu,
+    x: X,
+    chevronleft: ChevronLeft,
+    chevronright: ChevronRight,
+    chevrondown: ChevronDown,
+    chevronup: ChevronUp,
+    calendar: Calendar,
+    dollarsign: DollarSign,
+    creditcard: CreditCard,
+    wallet: Wallet,
+    clock: Clock,
+    filter: Filter,
+    externallink: ExternalLink,
+    download: Download,
+    upload: Upload,
+    moon: Moon,
+    sun: Sun,
+    smile: Smile,
+    target: Target
   };
   
-  // Convert to lowercase for case-insensitive lookup and return the icon or fallback to smile
-  return icons[iconName?.toLowerCase()] || icons.smile;
+  // Case-insensitive lookup
+  const key = iconName?.toLowerCase();
+  return icons[key] || Smile;
 }
