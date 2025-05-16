@@ -1,12 +1,12 @@
 import * as LucideIcons from 'lucide-react';
-/**
+
 /**
  * Returns an icon component from the Lucide icons library
  * @param {string} iconName - The name of the icon to retrieve
  * @returns {Function} - A React component that renders the icon
  */
 export default function getIcon(iconName) {
- */
+  const icons = {
     // Navigation and Actions
     home: LucideIcons.Home,
     settings: LucideIcons.Settings,
@@ -37,7 +37,8 @@ export default function getIcon(iconName) {
     shoppingCart: LucideIcons.ShoppingCart,
     moon: LucideIcons.Moon,
     sun: LucideIcons.Sun,
-    smile: LucideIcons.Smile
+    smile: LucideIcons.Smile,
+    target: LucideIcons.Target
   };
   
   return icons[iconName.toLowerCase()] || icons.smile;
