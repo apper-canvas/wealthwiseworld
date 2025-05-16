@@ -165,9 +165,13 @@ function Home() {
           <div className="space-y-6">
             <h2 className="text-xl md:text-2xl font-semibold">Dashboard Overview</h2>
             <p className="text-surface-600 dark:text-surface-400">
-              Track your finances and manage your money with WealthWise. Add transactions, set budgets, and monitor your spending.
+              Track your finances and manage your money with WealthWise. View your financial summary, add transactions, and monitor your spending.
             </p>
-            <MainFeature />
+            {/* Financial overview cards are shown only in Dashboard tab */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Recent Transactions</h3>
+              <MainFeature />
+            </div>
           </div>
         )}
         
@@ -176,8 +180,7 @@ function Home() {
             <div className="space-y-4">
               <h2 className="text-xl md:text-2xl font-semibold">Transaction Management</h2>
               <p className="text-surface-600 dark:text-surface-400">
-                Manage all your transactions in one place. Add, edit, and track your expenses and income.
-              </p>
+                Focus on managing your transactions in one place. Add, edit, delete, and track your expenses and income over time.</p>
               {/* Only show the transaction management component without the financial overview cards */}
               <MainFeature />
             </div>
