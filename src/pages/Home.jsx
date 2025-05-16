@@ -35,14 +35,15 @@ function Home() {
   // User from Redux store
   const { user } = useSelector((state) => state.user);
   
+  // Define transaction types - fix for ReferenceError: TypeInfo is not defined
+  const TransactionType = {
+    CREDIT: 'Credit',
+    DEBIT: 'Debit'
+  };
+  
   // Load financial data from transactions
   useEffect(() => {
     const calculateFinancialData = async () => {
-      // Define transaction types - fix for ReferenceError: TypeInfo is not defined
-      const TransactionType = {
-        CREDIT: 'Credit',
-        DEBIT: 'Debit'
-      };
       
       try {
         setIsLoading(true);
