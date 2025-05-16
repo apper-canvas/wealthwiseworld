@@ -9,6 +9,7 @@ import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import Budget from "./pages/Budget";
 import Goals from "./pages/Goals";
+import Bills from "./pages/Bills";
 
 // Icon components
 const MoonIcon = getIcon("Moon");
@@ -76,6 +77,7 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/budget" element={<Budget />} />
           <Route path="/goals" element={<Goals />} />
+          <Route path="/bills" element={<Bills />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
