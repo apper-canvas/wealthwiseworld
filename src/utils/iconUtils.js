@@ -5,7 +5,6 @@ import {
   DollarSign, CreditCard, Wallet, Clock, Filter, 
   ExternalLink, Download, Upload, Moon, Sun, Smile, Target
 } from 'lucide-react';
-    x: LucideIcons.X,
 /**
  * Utility to get icon components from Lucide
  */
