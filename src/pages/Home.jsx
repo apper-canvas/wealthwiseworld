@@ -11,6 +11,9 @@ const TrendingUpIcon = getIcon("TrendingUp");
 const DollarSignIcon = getIcon("DollarSign");
 const CreditCardIcon = getIcon("CreditCard");
 const BellIcon = getIcon("Bell");
+const PieChartIconForFeature = getIcon("PieChart");
+const TargetIcon = getIcon("Target");
+const CalendarIcon = getIcon("Calendar");
 
 function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -161,7 +164,13 @@ function Home() {
         {activeTab !== "dashboard" && activeTab !== "transactions" && (
           <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
             <div className="text-surface-400 dark:text-surface-500 mb-4">
-              {getIcon(activeTab === "budgets" ? "PieChart" : activeTab === "goals" ? "Target" : "Calendar")({ size: 64, className: "mx-auto opacity-50" })}
+              {activeTab === "budgets" ? (
+                <PieChartIconForFeature size={64} className="mx-auto opacity-50" />
+              ) : activeTab === "goals" ? (
+                <TargetIcon size={64} className="mx-auto opacity-50" />
+              ) : (
+                <CalendarIcon size={64} className="mx-auto opacity-50" />
+              )}
             </div>
             <h3 className="text-xl font-medium mb-2">
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Feature Coming Soon
