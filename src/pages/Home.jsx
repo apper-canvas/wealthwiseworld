@@ -214,8 +214,9 @@ function Home() {
               ${financialData.savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
-          </>
         )}
+        </motion.div>
+        </>
         </motion.div>
       </div>
 
