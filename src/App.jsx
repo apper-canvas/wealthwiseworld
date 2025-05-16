@@ -10,6 +10,7 @@ import NotFound from "./pages/NotFound";
 
 // Icon components
 const MoonIcon = getIcon("Moon");
+const BarChartIcon = getIcon("BarChart");
 const SunIcon = getIcon("Sun");
 
 function App() {
@@ -46,7 +47,7 @@ function App() {
               animate={{ rotate: 0 }}
               className="text-accent"
             >
-              {getIcon("BarChart")({ size: 28 })}
+              <BarChartIcon size={28} />
             </motion.div>
             <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
               WealthWise
