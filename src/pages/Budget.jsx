@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom";
+import { fetchBudgets, createBudget, updateBudget, deleteBudget } from "../services/budgetService";
 import getIcon from "../utils/iconUtils";
 
 // Icon components
@@ -10,6 +11,7 @@ const PlusIcon = getIcon("Plus");
 const EditIcon = getIcon("Edit");
 const TrashIcon = getIcon("Trash");
 const ArrowLeftIcon = getIcon("ArrowLeft");
+const LoaderIcon = getIcon("Loader");
 const CheckIcon = getIcon("Check");
 const XIcon = getIcon("X");
 const AlertCircleIcon = getIcon("AlertCircle");
@@ -22,40 +24,9 @@ const categories = [
   "Education", "Travel", "Gifts", "Savings", "Investments", "Debt", "Other"
 ];
 
-// Sample initial budgets
-const initialBudgets = [
-  { 
-    id: 1, 
-    category: "Housing", 
-    amount: 1200, 
-    spent: 1100, 
-    period: "Monthly",
-    color: "blue" 
-  },
-  { 
-    id: 2, 
-    category: "Food", 
-    amount: 500, 
-    spent: 350, 
-    period: "Monthly",
-    color: "green" 
-  },
-  { 
-    id: 3, 
-    category: "Transportation", 
-    amount: 300, 
-    spent: 325, 
-    period: "Monthly",
-    color: "red" 
-  },
-  { 
-    id: 4, 
-    category: "Entertainment", 
-    amount: 200, 
-    spent: 150, 
-    period: "Monthly",
-    color: "purple" 
-  },
+// Default budgets if none are found
+const defaultBudgets = [
+  // Empty by default, will load from API
 ];
 
 // Color options for budgets
@@ -72,11 +43,22 @@ const colorOptions = {
 
 function Budget() {
   const navigate = useNavigate();
-  const [budgets, setBudgets] = useState(() => {
-    const savedBudgets = localStorage.getItem("budgets");
-    return savedBudgets ? JSON.parse(savedBudgets) : initialBudgets;
-  });
+  
+  // State for budgets
+  const [budgets, setBudgets] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Load budgets from API
+  useEffect(() => {
+    fetchBudgets()
+      .then(data => setBudgets(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
+
   const [currentBudget, setCurrentBudget] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [budgetToDelete, setBudgetToDelete] = useState(null);
@@ -92,12 +74,7 @@ function Budget() {
   
   // Form validation errors
   const [errors, setErrors] = useState({});
-
-  // Save budgets to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("budgets", JSON.stringify(budgets));
-  }, [budgets]);
-
+  
   // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -166,7 +143,8 @@ function Budget() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
+    setSubmitting(true);
     if (!validateForm()) {
       return;
     }
@@ -180,25 +158,52 @@ function Budget() {
     };
     
     if (currentBudget) {
-      // Update existing budget
-      const updatedBudgets = budgets.map(budget => 
-        budget.id === currentBudget.id 
-          ? { ...budget, ...budgetData } 
-          : budget
-      );
-      setBudgets(updatedBudgets);
-      toast.success("Budget updated successfully!");
-    } else {
-      // Add new budget
-      const newBudget = {
-        id: Date.now(),
-        ...budgetData
+      // Update existing budget in database
+      const updateData = {
+        ...budgetData,
+        id: currentBudget.id
       };
-      setBudgets([...budgets, newBudget]);
-      toast.success("Budget added successfully!");
+      
+      updateBudget(updateData)
+        .then(() => {
+          const updatedBudgets = budgets.map(budget => 
+            budget.id === currentBudget.id 
+              ? { ...budget, ...budgetData } 
+              : budget
+          );
+          setBudgets(updatedBudgets);
+          toast.success("Budget updated successfully!");
+          setIsModalOpen(false);
+        })
+        .catch(err => {
+          toast.error(`Error updating budget: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
+    } else {
+      // Add new budget to database
+      createBudget(budgetData)
+        .then(newBudget => {
+          const formattedBudget = {
+            id: newBudget.Id,
+            category: newBudget.category,
+            amount: newBudget.amount,
+            spent: newBudget.spent,
+            period: newBudget.period,
+            color: newBudget.color
+          };
+          setBudgets([...budgets, formattedBudget]);
+          toast.success("Budget added successfully!");
+          setIsModalOpen(false);
+        })
+        .catch(err => {
+          toast.error(`Error creating budget: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     }
-    
-    setIsModalOpen(false);
   };
 
   // Open delete confirmation modal
@@ -210,10 +215,16 @@ function Budget() {
   // Handle budget deletion
   const handleDeleteBudget = () => {
     if (budgetToDelete) {
-      const filteredBudgets = budgets.filter(budget => budget.id !== budgetToDelete.id);
-      setBudgets(filteredBudgets);
-      toast.success("Budget deleted successfully!");
-      setIsDeleteConfirmOpen(false);
+      deleteBudget(budgetToDelete.id)
+        .then(() => {
+          const filteredBudgets = budgets.filter(budget => budget.id !== budgetToDelete.id);
+          setBudgets(filteredBudgets);
+          toast.success("Budget deleted successfully!");
+          setIsDeleteConfirmOpen(false);
+        })
+        .catch(err => {
+          toast.error(`Error deleting budget: ${err.message}`);
+        });
     }
   };
 
@@ -268,6 +279,23 @@ function Budget() {
         </button>
       </div>
 
+      {/* Loading state */}
+      {loading && (
+        <div className="flex justify-center items-center p-12">
+          <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading budgets...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
+          <p className="font-medium">Error loading budgets</p>
+          <p className="text-sm mt-1">{error}</p>
+          <button className="mt-2 btn-outline text-red-600 border-red-300" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
+
       {/* Budget stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="card">
@@ -298,7 +326,7 @@ function Budget() {
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Your Budgets</h2>
         
-        {budgets.length === 0 ? (
+        {!loading && !error && budgets.length === 0 ? (
           <div className="card p-8 text-center">
             <p className="text-surface-500 dark:text-surface-400 mb-4">You haven't set up any budgets yet.</p>
             <button onClick={openAddModal} className="btn btn-primary">
@@ -306,7 +334,7 @@ function Budget() {
               Create your first budget
             </button>
           </div>
-        ) : (
+        ) : (!loading && !error) ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {budgets.map((budget) => {
               const percentage = Math.min(100, (budget.spent / budget.amount) * 100);
@@ -376,6 +404,8 @@ function Budget() {
               );
             })}
           </div>
+        ) : (
+          null
         )}
       </div>
       
@@ -515,8 +545,12 @@ function Budget() {
                 </button>
                 <button
                   type="submit"
+                  disabled={submitting}
                   className="btn btn-primary"
                 >
+                  {submitting && (
+                    <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
+                  )}
                   {currentBudget ? 'Save Changes' : 'Create Budget'}
                 </button>
               </div>

@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
 import getIcon from "../utils/iconUtils";
+import { fetchFinancialGoals, createFinancialGoal, updateFinancialGoal, deleteFinancialGoal } from "../services/financialGoalService";
 
 // Icon components
 const PlusIcon = getIcon("Plus");
@@ -13,32 +14,25 @@ const CalendarIcon = getIcon("Calendar");
 const TrophyIcon = getIcon("Trophy");
 const TargetIcon = getIcon("Target");
 const DollarSignIcon = getIcon("DollarSign");
+const LoaderIcon = getIcon("Loader");
 const ArrowLeftIcon = getIcon("ArrowLeft");
 
 function Goals() {
   const navigate = useNavigate();
-  // State for goals
-  const [goals, setGoals] = useState(() => {
-    const savedGoals = localStorage.getItem("goals");
-    return savedGoals ? JSON.parse(savedGoals) : [
-      {
-        id: 1,
-        name: "Emergency Fund",
-        target: 10000,
-        current: 5000,
-        targetDate: "2023-12-31",
-        category: "Savings"
-      },
-      {
-        id: 2,
-        name: "New Car",
-        target: 25000,
-        current: 8000,
-        targetDate: "2024-06-30",
-        category: "Purchase"
-      }
-    ];
-  });
+  
+  // State for financial goals
+  const [goals, setGoals] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Load financial goals from API
+  useEffect(() => {
+    fetchFinancialGoals()
+      .then(data => setGoals(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   // State for modal
   const [showModal, setShowModal] = useState(false);
@@ -51,12 +45,6 @@ function Goals() {
     category: "Savings"
   });
 
-  // Save goals to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("goals", JSON.stringify(goals));
-  }, [goals]);
-
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCurrentGoal({
@@ -68,6 +56,8 @@ function Goals() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    setSubmitting(true);
     
     // Form validation
     if (!currentGoal.name) {
@@ -91,30 +81,57 @@ function Goals() {
     }
 
     if (isEditing) {
-      // Update existing goal
-      setGoals(goals.map(goal => 
-        goal.id === currentGoal.id ? currentGoal : goal
-      ));
-      toast.success("Goal updated successfully!");
+      // Update existing goal in the database
+      updateFinancialGoal(currentGoal)
+        .then(() => {
+          setGoals(goals.map(goal => 
+            goal.id === currentGoal.id ? currentGoal : goal
+          ));
+          toast.success("Goal updated successfully!");
+          closeModal();
+        })
+        .catch(err => {
+          toast.error(`Error updating goal: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     } else {
-      // Add new goal
-      const newGoal = {
-        ...currentGoal,
-        id: Date.now(),
-      };
-      setGoals([...goals, newGoal]);
-      toast.success("New goal added successfully!");
+      // Add new goal to the database
+      createFinancialGoal(currentGoal)
+        .then(newGoal => {
+          const formattedGoal = {
+            id: newGoal.Id,
+            name: newGoal.Name,
+            target: newGoal.target,
+            current: newGoal.current,
+            targetDate: newGoal.targetDate,
+            category: newGoal.category
+          };
+          setGoals([...goals, formattedGoal]);
+          toast.success("New goal added successfully!");
+          closeModal();
+        })
+        .catch(err => {
+          toast.error(`Error adding goal: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     }
-
-    // Reset and close modal
-    closeModal();
   };
 
   // Delete goal
   const handleDelete = (id) => {
     if (confirm("Are you sure you want to delete this goal?")) {
-      setGoals(goals.filter(goal => goal.id !== id));
-      toast.info("Goal deleted");
+      deleteFinancialGoal(id)
+        .then(() => {
+          setGoals(goals.filter(goal => goal.id !== id));
+          toast.info("Goal deleted");
+        })
+        .catch(err => {
+          toast.error(`Error deleting goal: ${err.message}`);
+        });
     }
   };
 
@@ -131,7 +148,7 @@ function Goals() {
       name: "",
       target: "",
       current: 0,
-      targetDate: "",
+      targetDate: format(new Date(), "yyyy-MM-dd"),
       category: "Savings"
     });
     setIsEditing(false);
@@ -176,6 +193,23 @@ function Goals() {
           <span>Add Goal</span>
         </button>
       </div>
+
+      {/* Loading state */}
+      {loading && (
+        <div className="flex justify-center items-center p-12">
+          <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading financial goals...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
+          <p className="font-medium">Error loading financial goals</p>
+          <p className="text-sm mt-1">{error}</p>
+          <button className="mt-2 btn-outline text-red-600 border-red-300" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
 
       {goals.length === 0 ? (
         <div className="text-center py-12 bg-surface-50 dark:bg-surface-800 rounded-xl">
@@ -354,7 +388,12 @@ function Goals() {
                 <button type="button" onClick={closeModal} className="btn-outline">
                   Cancel
                 </button>
-                <button type="submit" className="btn-primary">
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  disabled={submitting}
+                >
+                  {submitting && <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />}
                   {isEditing ? "Update Goal" : "Add Goal"}
                 </button>
               </div>

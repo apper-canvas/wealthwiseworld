@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { fetchBills, createBill, updateBill, deleteBill } from "../services/billService";
 import getIcon from "../utils/iconUtils";
 
 // Icon components
@@ -15,58 +16,25 @@ const CalendarIcon = getIcon("Calendar");
 const FilterIcon = getIcon("Filter");
 const CreditCardIcon = getIcon("CreditCard");
 const XIcon = getIcon("X");
+const LoaderIcon = getIcon("Loader");
 const ArrowLeftIcon = getIcon("ArrowLeft");
 
 function Bills() {
   const navigate = useNavigate();
-  // State for bills list
-  const [bills, setBills] = useState(() => {
-    const savedBills = localStorage.getItem("bills");
-    return savedBills
-      ? JSON.parse(savedBills)
-      : [
-          {
-            id: 1,
-            name: "Electricity",
-            amount: 120.50,
-            dueDate: "2023-08-15",
-            category: "Utilities",
-            isPaid: false,
-            recurring: "monthly",
-            autopay: false,
-          },
-          {
-            id: 2,
-            name: "Internet",
-            amount: 75.99,
-            dueDate: "2023-08-20",
-            category: "Utilities",
-            isPaid: true,
-            recurring: "monthly",
-            autopay: true,
-          },
-          {
-            id: 3,
-            name: "Rent",
-            amount: 1500.00,
-            dueDate: "2023-09-01",
-            category: "Housing",
-            isPaid: false,
-            recurring: "monthly",
-            autopay: false,
-          },
-          {
-            id: 4,
-            name: "Netflix",
-            amount: 15.99,
-            dueDate: "2023-08-10",
-            category: "Entertainment",
-            isPaid: true,
-            recurring: "monthly",
-            autopay: true,
-          },
-        ];
-  });
+  
+  // State for bills
+  const [bills, setBills] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Load bills from API
+  useEffect(() => {
+    fetchBills()
+      .then(data => setBills(data))
+      .catch(err => setError(err.message))
+      .finally(() => setLoading(false));
+  }, []);
 
   // State for active bill (for edit modal)
   const [activeBill, setActiveBill] = useState(null);
@@ -77,11 +45,6 @@ function Bills() {
   // State for filter and sort options
   const [filterOption, setFilterOption] = useState("all");
   const [sortOption, setSortOption] = useState("dueDate");
-
-  // Save bills to localStorage whenever they change
-  useEffect(() => {
-    localStorage.setItem("bills", JSON.stringify(bills));
-  }, [bills]);
 
   // Open the modal for adding a new bill
   const handleAddBill = () => {
@@ -107,6 +70,8 @@ function Bills() {
   // Save the bill (add or update)
   const handleSaveBill = (e) => {
     e.preventDefault();
+
+    setSubmitting(true);
     
     // Form validation
     if (!activeBill.name.trim()) {
@@ -128,40 +93,78 @@ function Bills() {
     const isExistingBill = bills.some(bill => bill.id === activeBill.id);
     
     if (isExistingBill) {
-      // Update existing bill
-      setBills(bills.map(bill => bill.id === activeBill.id ? activeBill : bill));
-      toast.success("Bill updated successfully!");
+      // Update existing bill in database
+      updateBill(activeBill)
+        .then(() => {
+          setBills(bills.map(bill => bill.id === activeBill.id ? activeBill : bill));
+          toast.success("Bill updated successfully!");
+          setIsModalOpen(false);
+        })
+        .catch(err => {
+          toast.error(`Error updating bill: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     } else {
-      // Add new bill
-      setBills([...bills, activeBill]);
-      toast.success("Bill added successfully!");
+      // Add new bill to database
+      createBill(activeBill)
+        .then(newBill => {
+          const formattedBill = {
+            id: newBill.Id,
+            name: newBill.Name,
+            amount: newBill.amount,
+            dueDate: newBill.dueDate,
+            category: newBill.category,
+            isPaid: newBill.isPaid,
+            recurring: newBill.recurring,
+            autopay: newBill.autopay
+          };
+          setBills([...bills, formattedBill]);
+          toast.success("Bill added successfully!");
+          setIsModalOpen(false);
+        })
+        .catch(err => {
+          toast.error(`Error adding bill: ${err.message}`);
+        })
+        .finally(() => {
+          setSubmitting(false);
+        });
     }
-    
-    // Close the modal
-    setIsModalOpen(false);
   };
 
   // Delete a bill
   const handleDeleteBill = (id) => {
     if (window.confirm("Are you sure you want to delete this bill?")) {
-      setBills(bills.filter(bill => bill.id !== id));
-      toast.success("Bill deleted successfully!");
+      deleteBill(id)
+        .then(() => {
+          setBills(bills.filter(bill => bill.id !== id));
+          toast.success("Bill deleted successfully!");
+        })
+        .catch(err => {
+          toast.error(`Error deleting bill: ${err.message}`);
+        });
     }
   };
 
   // Toggle the paid status of a bill
   const handleTogglePaid = (id) => {
-    setBills(bills.map(bill => {
-      if (bill.id === id) {
-        const updatedBill = { ...bill, isPaid: !bill.isPaid };
+    const bill = bills.find(bill => bill.id === id);
+    if (!bill) return;
+
+    const updatedBill = { ...bill, isPaid: !bill.isPaid };
+    
+    updateBill(updatedBill)
+      .then(() => {
+        setBills(bills.map(b => b.id === id ? updatedBill : b));
         toast.success(updatedBill.isPaid 
           ? `${bill.name} marked as paid!` 
           : `${bill.name} marked as unpaid!`
         );
-        return updatedBill;
-      }
-      return bill;
-    }));
+      })
+      .catch(err => {
+        toast.error(`Error updating bill: ${err.message}`);
+      });
   };
 
   // Apply filters and sorting to bills
@@ -235,6 +238,23 @@ function Bills() {
           <div className="flex flex-col">
             <div className="text-red-600 dark:text-red-400 text-sm">Unpaid Amount</div>
             <div className="mt-1 text-2xl font-semibold">${unpaidAmount.toFixed(2)}</div>
+
+      {/* Loading state */}
+      {loading && (
+        <div className="flex justify-center items-center p-12">
+          <LoaderIcon className="w-10 h-10 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading bills...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && (
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 text-red-600 dark:text-red-400">
+          <p className="font-medium">Error loading bills</p>
+          <p className="text-sm mt-1">{error}</p>
+          <button className="mt-2 btn-outline text-red-600 border-red-300" onClick={() => window.location.reload()}>Retry</button>
+        </div>
+      )}
           </div>
         </div>
       </div>
@@ -270,7 +290,7 @@ function Bills() {
       </div>
       
       {/* Bills list */}
-      {sortedBills.length > 0 ? (
+      {!loading && !error && sortedBills.length > 0 ? (
         <div className="space-y-4">
           {sortedBills.map((bill) => (
             <motion.div
@@ -334,12 +354,14 @@ function Bills() {
             </motion.div>
           ))}
         </div>
-      ) : (
+      ) : (!loading && !error) ? (
         <div className="text-center py-12 text-surface-500 bg-surface-50 dark:bg-surface-800/50 rounded-xl">
           <BellIcon size={48} className="mx-auto mb-4 opacity-30" />
           <p className="text-lg font-medium">No bills found</p>
           <p className="mt-2">Add a new bill to get started</p>
         </div>
+      ) : (
+        null
       )}
       
       {/* Add/Edit Bill Modal */}
@@ -463,7 +485,11 @@ function Bills() {
                   <button 
                     type="submit"
                     className="btn-primary"
+                    disabled={submitting}
                   >
+                    {submitting && (
+                      <LoaderIcon className="w-4 h-4 mr-2 animate-spin" />
+                    )}
                     Save Bill
                   </button>
                 </div>
