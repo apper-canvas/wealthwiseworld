@@ -163,7 +163,7 @@ function Home() {
       <div className="mt-6">
         {activeTab === "dashboard" && (
           <div className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-semibold">Financial Overview</h2>
+            <h2 className="text-xl md:text-2xl font-semibold">Dashboard Overview</h2>
             <p className="text-surface-600 dark:text-surface-400">
               Track your finances and manage your money with WealthWise. Add transactions, set budgets, and monitor your spending.
             </p>
@@ -173,8 +173,14 @@ function Home() {
         
         {activeTab === "transactions" && (
           <div className="space-y-6">
-            <h2 className="text-xl md:text-2xl font-semibold">Recent Transactions</h2>
-            <MainFeature />
+            <div className="space-y-4">
+              <h2 className="text-xl md:text-2xl font-semibold">Transaction Management</h2>
+              <p className="text-surface-600 dark:text-surface-400">
+                Manage all your transactions in one place. Add, edit, and track your expenses and income.
+              </p>
+              {/* Only show the transaction management component without the financial overview cards */}
+              <MainFeature />
+            </div>
           </div>
         )}
         
