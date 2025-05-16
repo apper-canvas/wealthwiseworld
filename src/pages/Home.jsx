@@ -1,7 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { toast } from "react-toastify"; 
 import { format } from "date-fns";
+import { fetchTransactions } from "../services/transactionService";
+import { useSelector } from "react-redux";
 import getIcon from "../utils/iconUtils";
 import MainFeature from "../components/MainFeature";
 
@@ -20,14 +22,53 @@ const EditIcon = getIcon("Edit");
 import { useNavigate } from "react-router-dom";
 function Home() {
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Sample financial overview data
-  const financialData = {
-    balance: 12467.89,
-    income: 3850.00,
-    expenses: 2243.50,
-    savings: 1606.50,
-  };
+  // Financial data state
+  const [financialData, setFinancialData] = useState({
+    balance: 0,
+    income: 0,
+    expenses: 0,
+    savings: 0,
+  });
+  
+  // User from Redux store
+  const { user } = useSelector((state) => state.user);
+  
+  // Load financial data from transactions
+  useEffect(() => {
+    const calculateFinancialData = async () => {
+      try {
+        setIsLoading(true);
+        const transactions = await fetchTransactions();
+        
+        // Calculate summary data
+        const income = transactions
+          .filter(t => t.type === 'income')
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+        
+        const expenses = transactions
+          .filter(t => t.type === 'expense')
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+        
+        const savings = income - expenses;
+        const balance = 10000 + savings; // Starting balance + savings
+        
+        setFinancialData({
+          balance,
+          income,
+          expenses,
+          savings
+        });
+      } catch (error) {
+        console.error("Error calculating financial data:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    calculateFinancialData();
+  }, [user]);
   
   const navigate = useNavigate();
 
@@ -90,7 +131,24 @@ function Home() {
 
       {/* Financial overview cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <motion.div
+        {isLoading ? (
+          Array(4).fill(0).map((_, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 * i }}
+              className="card"
+            >
+              <div className="flex flex-col animate-pulse">
+                <div className="h-4 bg-surface-200 dark:bg-surface-700 rounded w-1/2 mb-3"></div>
+                <div className="h-6 bg-surface-200 dark:bg-surface-700 rounded w-3/4"></div>
+              </div>
+            </motion.div>
+          ))
+        ) : (
+          <>
+          <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
@@ -156,6 +214,8 @@ function Home() {
               ${financialData.savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
+          </>
+        )}
         </motion.div>
       </div>
 

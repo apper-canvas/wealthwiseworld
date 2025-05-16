@@ -2,6 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
+import { 
+  fetchTransactions, 
+  createTransaction, 
+  updateTransaction, 
+  deleteTransaction 
+} from "../services/transactionService";
 import getIcon from "../utils/iconUtils";
 
 // Icon components
@@ -16,6 +22,7 @@ const DollarSignIcon = getIcon("DollarSign");
 const ShoppingCartIcon = getIcon("ShoppingCart");
 const TrashIcon = getIcon("Trash");
 const EditIcon = getIcon("Edit");
+const LoaderIcon = getIcon("Loader");
 const XIcon = getIcon("X");
 
 // Transaction categories with icons
@@ -35,45 +42,14 @@ const initialFormState = {
   amount: "",
   date: format(new Date(), "yyyy-MM-dd"),
   category: "shopping",
-  type: "expense",
+  type: "expense", 
+  account: "",
 };
 
-// Sample transaction data
-const sampleTransactions = [
-  {
-    id: "t1",
-    description: "Salary",
-    amount: 3500,
-    date: "2023-05-28",
-    category: "income",
-    type: "income",
-  },
-  {
-    id: "t2",
-    description: "Apartment Rent",
-    amount: 1200,
-    date: "2023-05-27",
-    category: "housing",
-    type: "expense",
-  },
-  {
-    id: "t3",
-    description: "Grocery Shopping",
-    amount: 185.75,
-    date: "2023-05-26",
-    category: "groceries",
-    type: "expense",
-  },
-  {
-    id: "t4",
-    description: "Dinner with Friends",
-    amount: 68.50,
-    date: "2023-05-25",
-    category: "dining",
-    type: "expense",
-  },
-];
-
+/**
+ * MainFeature component for displaying and managing transactions
+ * Uses the transaction service to interact with the database
+ */
 function MainFeature() {
   const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState(initialFormState);
@@ -81,9 +57,26 @@ function MainFeature() {
   const [editingId, setEditingId] = useState(null);
   const modalRef = useRef(null);
   
-  // Load sample transactions
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState(null);
+  
+  // Load transactions from the database
   useEffect(() => {
-    setTransactions(sampleTransactions);
+    const loadTransactions = async () => {
+      try {
+        setIsLoading(true);
+        const data = await fetchTransactions();
+        setTransactions(data);
+      } catch (error) {
+        setError("Failed to load transactions");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    loadTransactions();
   }, []);
 
   // Handle click outside modal
@@ -112,55 +105,75 @@ function MainFeature() {
   // Handle form submission
   const handleSubmit = (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     // Validate form data
     if (!formData.description.trim()) {
       toast.error("Please enter a description");
+      setIsSubmitting(false);
       return;
     }
     
     if (!formData.amount || isNaN(Number(formData.amount)) || Number(formData.amount) <= 0) {
       toast.error("Please enter a valid amount");
+      setIsSubmitting(false);
       return;
     }
 
-    // Create new transaction or update existing
-    if (editingId) {
-      // Update existing transaction
-      const updatedTransactions = transactions.map(transaction => 
-        transaction.id === editingId 
-          ? { 
-              ...transaction, 
-              description: formData.description,
-              amount: Number(formData.amount),
-              date: formData.date,
-              category: formData.category,
-              type: formData.type
-            }
-          : transaction
-      );
+    try {
+      // Create new transaction or update existing
+      if (editingId) {
+        // Update existing transaction
+        const transactionToUpdate = {
+          id: editingId,
+          description: formData.description,
+          amount: Number(formData.amount),
+          date: formData.date,
+          category: formData.category,
+          type: formData.type,
+          account: formData.account || ""
+        };
+        
+        await updateTransaction(transactionToUpdate);
+        
+        // Update the transactions list with the updated transaction
+        const updatedTransactions = transactions.map(transaction => 
+          transaction.id === editingId 
+            ? { ...transaction, ...transactionToUpdate }
+            : transaction
+        );
+        
+        setTransactions(updatedTransactions);
+        toast.success("Transaction updated successfully");
+        setEditingId(null);
+      } else {
+        // Add new transaction - note we don't set an ID, the server will generate one
+        const newTransaction = {
+          description: formData.description,
+          amount: Number(formData.amount),
+          date: formData.date,
+          category: formData.category,
+          type: formData.type,
+          account: formData.account || ""
+        };
+        
+        // Create the transaction in the database
+        const createdTransaction = await createTransaction(newTransaction);
+        
+        // Add the new transaction to the state
+        setTransactions([createdTransaction, ...transactions]);
+        toast.success("Transaction added successfully");
+      }
       
-      setTransactions(updatedTransactions);
-      toast.success("Transaction updated successfully");
-      setEditingId(null);
-    } else {
-      // Add new transaction
-      const newTransaction = {
-        id: `t${Date.now()}`,
-        description: formData.description,
-        amount: Number(formData.amount),
-        date: formData.date,
-        category: formData.category,
-        type: formData.type,
-      };
-      
-      setTransactions([newTransaction, ...transactions]);
-      toast.success("Transaction added successfully");
+      // Reset form data and hide form
+      setFormData(initialFormState);
+      setShowModal(false);
+    } catch (error) {
+      toast.error(error.message || "Failed to save transaction");
+      console.error("Error saving transaction:", error);
+    } finally {
+      setIsSubmitting(false);
     }
-    
-    // Reset form data and hide form
-    setFormData(initialFormState);
-    setShowModal(false);
   };
 
   // Edit transaction
@@ -169,6 +182,7 @@ function MainFeature() {
       description: transaction.description,
       amount: transaction.amount.toString(),
       date: transaction.date,
+      account: transaction.account || "",
       category: transaction.category,
       type: transaction.type,
     });
@@ -177,9 +191,30 @@ function MainFeature() {
   };
 
   // Delete transaction
-  const handleDelete = (id) => {
-    setTransactions(transactions.filter(transaction => transaction.id !== id));
-    toast.success("Transaction deleted successfully");
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this transaction?")) {
+      return;
+    }
+    
+    try {
+      // Set a temporary loading state for the transaction being deleted
+      setTransactions(transactions.map(t => 
+        t.id === id ? { ...t, isDeleting: true } : t
+      ));
+      
+      // Delete from database
+      await deleteTransaction(id);
+      
+      // Remove from state
+      setTransactions(transactions.filter(transaction => transaction.id !== id));
+      toast.success("Transaction deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete transaction");
+      // Restore the transaction in the UI by removing the loading state
+      setTransactions(transactions.map(t => 
+        t.id === id ? { ...t, isDeleting: false } : t
+      ));
+    }
   };
 
   // Get category details by ID
@@ -197,6 +232,7 @@ function MainFeature() {
         <motion.button
           onClick={openModal}
           whileHover={{ scale: 1.05 }}
+          disabled={isSubmitting}
           whileTap={{ scale: 0.95 }}
           className="btn-primary flex items-center gap-2"
         >
@@ -348,6 +384,148 @@ function MainFeature() {
                   <div className="flex justify-end gap-3 mt-6">
                     <button
                       type="button"
+                      disabled={isSubmitting}
+                      onClick={closeModal}
+                      className="btn-outline"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="btn-primary relative"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <LoaderIcon className="w-5 h-5 animate-spin mr-2" />
+                          <span>Saving...</span>
+                        </>
+                      ) : (
+                        <>{editingId ? "Update" : "Add"} Transaction</>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Transactions list */}
+      <div className="card border border-surface-200 dark:border-surface-700 overflow-hidden">
+        {isLoading ? (
+          <div className="flex justify-center items-center p-12">
+            <LoaderIcon className="w-8 h-8 animate-spin text-primary" />
+            <span className="ml-3">Loading transactions...</span>
+          </div>
+        ) : error ? (
+          <div className="flex justify-center items-center p-12 text-red-500">
+            <p>{error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="ml-3 underline"
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-full divide-y divide-surface-200 dark:divide-surface-700">
+              <thead className="bg-surface-100 dark:bg-surface-800">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                    Description
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                    Date
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold text-surface-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-surface-800 divide-y divide-surface-200 dark:divide-surface-700">
+                {transactions.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="px-4 py-8 text-center text-surface-500">
+                      No transactions found. Add your first transaction to get started.
+                    </td>
+                  </tr>
+                ) : (
+                  transactions.map((transaction) => {
+                    const category = getCategoryById(transaction.category);
+                    const CategoryIcon = category.icon;
+                    return (
+                      <tr
+                        key={transaction.id}
+                        className={`hover:bg-surface-50 dark:hover:bg-surface-700/50 transition-colors ${
+                          transaction.isDeleting ? 'opacity-50' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="font-medium">{transaction.description}</div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center gap-2">
+                            <CategoryIcon className={`w-4 h-4 ${category.color}`} />
+                            <span>{category.name}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-surface-600 dark:text-surface-400">
+                          {format(new Date(transaction.date), 'MMM dd, yyyy')}
+                        </td>
+                        <td className={`px-4 py-3 whitespace-nowrap text-right font-semibold ${
+                          transaction.type === 'income' 
+                            ? 'text-green-600 dark:text-green-400' 
+                            : 'text-red-600 dark:text-red-400'
+                        }`}>
+                          {transaction.type === 'income' ? '+' : '-'}${transaction.amount.toFixed(2)}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap text-right">
+                          <div className="flex justify-end items-center gap-2">
+                            <button
+                              onClick={() => handleEdit(transaction)}
+                              disabled={transaction.isDeleting}
+                              className="p-1 rounded-lg hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-400"
+                              aria-label="Edit transaction"
+                            >
+                              <EditIcon className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(transaction.id)}
+                              disabled={transaction.isDeleting}
+                              className="p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 text-surface-600 dark:text-surface-400 hover:text-red-600 dark:hover:text-red-400"
+                              aria-label="Delete transaction"
+                            >
+                              {transaction.isDeleting ? (
+                                <LoaderIcon className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <TrashIcon className="w-4 h-4" />
+                              )}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default MainFeature;
                       onClick={closeModal}
                       className="btn-outline"
                     >

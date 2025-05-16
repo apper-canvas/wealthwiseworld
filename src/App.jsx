@@ -175,6 +175,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/transactions" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/callback" element={<Callback />} />
           <Route path="/error" element={<ErrorPage />} />
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
