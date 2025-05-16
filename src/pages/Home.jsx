@@ -181,7 +181,6 @@ function Home() {
               <h2 className="text-xl md:text-2xl font-semibold">Transaction Management</h2>
               <p className="text-surface-600 dark:text-surface-400">
                 Focus on managing your transactions in one place. Add, edit, delete, and track your expenses and income over time.</p>
-              {/* Only show the transaction management component without the financial overview cards */}
               <MainFeature />
             </div>
           </div>
