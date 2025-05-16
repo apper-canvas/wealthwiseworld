@@ -58,6 +58,18 @@
   .select-field {
     @apply input-field appearance-none bg-no-repeat bg-right pr-8;
   }
+  
+  .modal-backdrop {
+    @apply fixed inset-0 bg-surface-900/50 backdrop-blur-sm z-40 flex items-center justify-center p-4;
+  }
+  
+  .modal-container {
+    @apply relative w-full max-w-2xl mx-auto z-50;
+  }
+  
+  .modal-content {
+    @apply card border border-surface-200 dark:border-surface-700 shadow-xl w-full max-h-[90vh] overflow-y-auto;
+  }
 }
 
 @layer utilities {

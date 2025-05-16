@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "react-toastify";
 import { format } from "date-fns";
@@ -16,6 +16,7 @@ const DollarSignIcon = getIcon("DollarSign");
 const ShoppingCartIcon = getIcon("ShoppingCart");
 const TrashIcon = getIcon("Trash");
 const EditIcon = getIcon("Edit");
+const XIcon = getIcon("X");
 
 // Transaction categories with icons
 const categories = [
@@ -74,20 +75,30 @@ const sampleTransactions = [
 ];
 
 function MainFeature() {
-  const [showForm, setShowForm] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [formData, setFormData] = useState(initialFormState);
   const [transactions, setTransactions] = useState([]);
   const [editingId, setEditingId] = useState(null);
+  const modalRef = useRef(null);
   
   // Load sample transactions
   useEffect(() => {
     setTransactions(sampleTransactions);
   }, []);
 
-  // Handle form toggle
+  // Handle click outside modal
+  const handleClickOutside = (e) => {
+    if (modalRef.current && !modalRef.current.contains(e.target)) {
+      closeModal();
+    }
+  };
+
+  // Toggle modal visibility
+  const openModal = () => setShowModal(true);
+  const closeModal = () => {
   const toggleForm = () => {
-    setShowForm(!showForm);
-    if (editingId && !showForm) {
+    setShowModal(false);
+    if (editingId) {
       setEditingId(null);
       setFormData(initialFormState);
     }
@@ -150,7 +161,7 @@ function MainFeature() {
     
     // Reset form data and hide form
     setFormData(initialFormState);
-    setShowForm(false);
+    setShowModal(false);
   };
 
   // Edit transaction
@@ -163,7 +174,7 @@ function MainFeature() {
       type: transaction.type,
     });
     setEditingId(transaction.id);
-    setShowForm(true);
+    setShowModal(true);
   };
 
   // Delete transaction
@@ -184,7 +195,7 @@ function MainFeature() {
         <h3 className="text-lg md:text-xl font-semibold">
           Recent Transactions
         </h3>
-        <motion.button
+          onClick={openModal}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           onClick={toggleForm}
@@ -197,139 +208,162 @@ function MainFeature() {
 
       {/* Add/Edit transaction form */}
       <AnimatePresence>
-        {showForm && (
+        {showModal && (
           <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: "auto", opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="modal-backdrop"
+            onClick={handleClickOutside}
           >
-            <form onSubmit={handleSubmit} className="card border border-surface-200 dark:border-surface-700">
-              <h4 className="font-semibold mb-4">
-                {editingId ? "Edit Transaction" : "Add New Transaction"}
-              </h4>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
-                    Description
-                  </label>
-                  <input
-                    type="text"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    placeholder="What was this for?"
-                    className="input-field"
-                    required
-                  />
-                </div>
-                
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
-                    Amount
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      name="amount"
-                      value={formData.amount}
-                      onChange={handleInputChange}
-                      placeholder="0.00"
-                      className="input-field pl-7"
-                      step="0.01"
-                      min="0.01"
-                      required
-                    />
-                  </div>
-                </div>
-                
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    name="date"
-                    value={formData.date}
-                    onChange={handleInputChange}
-                    className="input-field"
-                    required
-                  />
-                </div>
-                
-                <div className="flex flex-col">
-                  <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
-                    Category
-                  </label>
-                  <div className="relative">
-                    <select
-                      name="category"
-                      value={formData.category}
-                      onChange={handleInputChange}
-                      className="input-field appearance-none pr-10"
-                      required
+            <motion.div 
+              className="modal-container"
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              transition={{ type: "spring", bounce: 0.3 }}
+              ref={modalRef}
+            >
+              <div className="modal-content">
+                <form onSubmit={handleSubmit} className="p-5">
+                  <div className="flex justify-between items-center mb-4">
+                    <h4 className="font-semibold">
+                      {editingId ? "Edit Transaction" : "Add New Transaction"}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="p-1 rounded-full hover:bg-surface-200 dark:hover:bg-surface-700"
+                      aria-label="Close modal"
                     >
-                      {categories.map(category => (
-                        <option key={category.id} value={category.id}>
-                          {category.name}
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5 text-surface-500" />
+                      <XIcon className="w-5 h-5" />
+                    </button>
                   </div>
-                </div>
-                
-                <div className="flex flex-col md:col-span-2">
-                  <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
-                    Type
-                  </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer">
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex flex-col">
+                      <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
+                        Description
+                      </label>
                       <input
-                        type="radio"
-                        name="type"
-                        value="expense"
-                        checked={formData.type === "expense"}
+                        type="text"
+                        name="description"
+                        value={formData.description}
                         onChange={handleInputChange}
-                        className="form-radio h-4 w-4 text-primary"
+                        placeholder="What was this for?"
+                        className="input-field"
+                        required
                       />
-                      <span>Expense</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    </div>
+                    
+                    <div className="flex flex-col">
+                      <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
+                        Amount
+                      </label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          name="amount"
+                          value={formData.amount}
+                          onChange={handleInputChange}
+                          placeholder="0.00"
+                          className="input-field pl-7"
+                          step="0.01"
+                          min="0.01"
+                          required
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col">
+                      <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
+                        Date
+                      </label>
                       <input
-                        type="radio"
-                        name="type"
-                        value="income"
-                        checked={formData.type === "income"}
+                        type="date"
+                        name="date"
+                        value={formData.date}
                         onChange={handleInputChange}
-                        className="form-radio h-4 w-4 text-primary"
+                        className="input-field"
+                        required
                       />
-                      <span>Income</span>
-                    </label>
+                    </div>
+                    
+                    <div className="flex flex-col">
+                      <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
+                        Category
+                      </label>
+                      <div className="relative">
+                        <select
+                          name="category"
+                          value={formData.category}
+                          onChange={handleInputChange}
+                          className="input-field appearance-none pr-10"
+                          required
+                        >
+                          {categories.map(category => (
+                            <option key={category.id} value={category.id}>
+                              {category.name}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDownIcon className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none w-5 h-5 text-surface-500" />
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col md:col-span-2">
+                      <label className="mb-1 text-sm text-surface-600 dark:text-surface-400">
+                        Type
+                      </label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="type"
+                            value="expense"
+                            checked={formData.type === "expense"}
+                            onChange={handleInputChange}
+                            className="form-radio h-4 w-4 text-primary"
+                          />
+                          <span>Expense</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="type"
+                            value="income"
+                            checked={formData.type === "income"}
+                            onChange={handleInputChange}
+                            className="form-radio h-4 w-4 text-primary"
+                          />
+                          <span>Income</span>
+                        </label>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                  
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={closeModal}
+                      className="btn-outline"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                    >
+                      {editingId ? "Update" : "Add"} Transaction
+                    </button>
+                  </div>
+                </form>
               </div>
-              
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  type="button"
-                  onClick={toggleForm}
-                  className="btn-outline"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                >
-                  {editingId ? "Update" : "Add"} Transaction
-                </button>
-              </div>
-            </form>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
