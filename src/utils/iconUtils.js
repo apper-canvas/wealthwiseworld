@@ -1,36 +1,44 @@
 import * as LucideIcons from 'lucide-react';
-
 /**
- * Utility function to get icon components by name
- * @param {string} name - Name of the icon from lucide-react
- * @returns {function} React component for the requested icon
+/**
+ * Returns an icon component from the Lucide icons library
+ * @param {string} iconName - The name of the icon to retrieve
+ * @returns {Function} - A React component that renders the icon
  */
-export default function getIcon(name) {
-  // Check if the icon exists in the lucide-react library
-  if (!LucideIcons[name]) {
-    console.warn(`Icon "${name}" not found in lucide-react library`);
-    // Return a fallback icon or null
-    return LucideIcons.HelpCircle || (() => null);
-  }
+export default function getIcon(iconName) {
+ */
+    // Navigation and Actions
+    home: LucideIcons.Home,
+    settings: LucideIcons.Settings,
+    logout: LucideIcons.LogOut,
+    plus: LucideIcons.Plus,
+    edit: LucideIcons.Edit,
+    trash: LucideIcons.Trash,
+    search: LucideIcons.Search,
+    
+    // Finance-specific
+    barChart: LucideIcons.BarChart,
+    barChart2: LucideIcons.BarChart2,
+    pieChart: LucideIcons.PieChart,
+    trendingUp: LucideIcons.TrendingUp,
+    trendingDown: LucideIcons.TrendingDown,
+    dollarSign: LucideIcons.DollarSign,
+    creditCard: LucideIcons.CreditCard,
+    
+    // Misc UI Icons
+    bell: LucideIcons.Bell,
+    alertCircle: LucideIcons.AlertCircle,
+    calendar: LucideIcons.Calendar,
+    chevronDown: LucideIcons.ChevronDown,
+    shoppingBag: LucideIcons.ShoppingBag,
+    coffee: LucideIcons.Coffee,
+    car: LucideIcons.Car,
+    heart: LucideIcons.Heart,
+    shoppingCart: LucideIcons.ShoppingCart,
+    moon: LucideIcons.Moon,
+    sun: LucideIcons.Sun,
+    smile: LucideIcons.Smile
+  };
   
-  // Return the icon component
-  return LucideIcons[name];
-}
-
-// Additional utility function to get all available icon names
-export function getAvailableIcons() {
-  return Object.keys(LucideIcons).filter(
-    // Filter out non-icon exports from the package
-    key => typeof LucideIcons[key] === 'function' && 
-           // Ensure it's a component (has displayName)
-           LucideIcons[key].displayName
-  );
-}
-
-// Export common icons directly for better performance
-export const Icons = {
-  Moon: LucideIcons.Moon,
-  Sun: LucideIcons.Sun
-};
-  return Icons[iconName] || Icons.Smile;
+  return icons[iconName.toLowerCase()] || icons.smile;
 }
